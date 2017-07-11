@@ -1,5 +1,5 @@
 """
-WSGI config for fly_southern project.
+WSGI config for flysouthern project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
