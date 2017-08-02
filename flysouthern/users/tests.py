@@ -5,6 +5,8 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from .factories import MyUserFactory
 
+from django.contrib.auth import authenticate, login
+
 
 class MyUserTest(APITestCase):
 
@@ -15,7 +17,19 @@ class MyUserTest(APITestCase):
         user.save()
         return user
 
-    def test_user_login(self):
+    def test_authenticate_with_email_passwod(self):
+        # Given:
+        email = 'user1@company.com'
+        password = 'mysecret'
+        user = MyUserTest.create_user(email, password)
+
+        # When:
+        authenticated_user = authenticate(email=email, password=password)
+
+        # Then:
+        self.assertEqual(user, authenticated_user)
+
+    def test_login_with_email_passwod(self):
         # Given:
         email = 'user1@company.com'
         password = 'mysecret'
