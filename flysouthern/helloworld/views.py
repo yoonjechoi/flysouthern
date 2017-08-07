@@ -1,5 +1,4 @@
 from django.http import HttpResponse
-from django.shortcuts import render
 
 # Create your views here.
 from rest_framework.authentication import TokenAuthentication
@@ -16,3 +15,4 @@ def hello_world(request):
 @permission_classes((IsAuthenticated,))
 def hello_authenticated_user(request):
     return HttpResponse("Hello, %s" % request.user.email)
+

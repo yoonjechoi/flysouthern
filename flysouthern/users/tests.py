@@ -29,7 +29,7 @@ class MyUserTest(APITestCase):
         # Then:
         self.assertEqual(user, authenticated_user)
 
-    def test_login_with_email_passwod(self):
+    def test_client_login_with_email_passwod(self):
         # Given:
         email = 'user1@company.com'
         password = 'mysecret'
