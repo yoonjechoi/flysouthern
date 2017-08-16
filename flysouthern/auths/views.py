@@ -2,15 +2,15 @@ import facebook
 from django.conf import settings
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users import models as users_model
-from .auth_providers import InvalidAccessToken
 from .serializers import LoginSerializer, FacebookLoginSerializer
 
 
-class LoginView(APIView):
+class LoginWithEmailPasswordView(APIView):
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -38,6 +38,12 @@ class LoginView(APIView):
             return Response(data={"token": token.key}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class InvalidAccessToken(APIException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    default_detail = 'invalid access_token error'
+    default_code = 'invliad_access_token_error'
 
 
 class LoginWithFacebookTokenView(APIView):

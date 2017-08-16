@@ -16,23 +16,6 @@ class MyUserMixin(object):
         token = Token.objects.create(user=user)
         return user, token
 
-    # @classmethod
-    # def create_user(cls, email=None, password=None, token_key=None):
-    #     if not email:
-    #         email = "user@example.com"
-    #
-    #     if password:
-    #         user = users_factories.MyUserFactory.build(email=email)
-    #         user.set_password(password)
-    #         user.save()
-    #
-    #     else:
-    #         user = users_factories.MyUserFactory.create(email=email)
-    #
-    #     token = Token.objects.create(user=user, key=token_key)
-    #
-    #     return user, token
-
     @classmethod
     def create_users(cls, number_of_users):
         email_format = 'user{number}@example.com'
