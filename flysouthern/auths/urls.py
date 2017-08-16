@@ -3,7 +3,9 @@
 
 from django.conf.urls import url
 
-from .views import LoginView
+from .views import LoginView, FacebookLoginView
+
 urlpatterns = [
-    url(r'auth/login', LoginView.as_view()),
+    url(r'login', LoginView.as_view()),
+    url(r'facebook', FacebookLoginView.as_view()),
 ]
