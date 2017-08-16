@@ -1,16 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import json
+from unittest.mock import patch
 
 from django.conf import settings
 from munch import Munch
-from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from users.factories import MyUserFactory
-from users.models import MyUser
+from rest_framework.test import APITestCase
+
 from flysouthern.test_mixins import MyUserMixin
-from .auth_providers import FacebookAuth
+from users.models import MyUser
 
 
 class AuthsTest(MyUserMixin, APITestCase):
@@ -43,49 +42,92 @@ class AuthsTest(MyUserMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-class FacebookLoginTest(MyUserMixin, APITestCase):
-
-    # For the purpose of testing
-    USER_ACCESS_TOKEN = access_token = 'EAABf7eOV5o4BAIKltVHFeInyFl8vu22lHJAvUT2cKX4BaJIZALfMln15BHI8HDckhoYyOJloEMYkQwlawLJSnCiK5sOF8xUL7pEfsuNJtSgvIRO6pkYYOJOhSgEZC3qGULwDUbtQ6bskamLC7xdeZBt64P7rZAwZD'
-
-    def test_first_login_with_facebook(self):
+class FacebookLoginTest(APITestCase):
+    @patch('facebook.GraphAPI', autospec=True)
+    def test_first_login_with_facebook_access_token(self, MockGraphAPI):
         # Given:
-        before_user_count = MyUser.objects.count()
+        facebook_access_token = 'it is my facebook test token'
+        user_count_before_login = MyUser.objects.count()
+
+        MockGraphAPI.return_value.debug_access_token.return_value = {
+            "data": {
+                "app_id": settings.FACEBOOK_APP_ID,
+                "application": settings.FACEBOOK_APP_NAME,
+                "is_valid": True,
+                "scopes": [
+                    "email",
+                ],
+            }
+        }
+
+        MockGraphAPI.return_value.get_object.return_value = {
+            "name": "fake-user-1",
+            "email": "fake_user_1@example.com"
+        }
 
         # When:
         response = self.client.post('/auth/facebook',
-                                    {'provider': 'facebook', 'access_token': self.USER_ACCESS_TOKEN})
+                                    {'provider': 'facebook',
+                                     'access_token': facebook_access_token})
 
         # Then:
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        after_user_count = MyUser.objects.count()
         response_data = Munch(response.data)
 
         user = MyUser.objects.get(email=response_data.user['email'])
         token = Token.objects.get(key=response_data.token)
 
-        self.assertEqual(before_user_count + 1, after_user_count)
+        user_count_after_login = MyUser.objects.count()
+        token_count_after_login = Token.objects.count()
+
+        self.assertEqual(user_count_before_login + 1, user_count_after_login)
+        self.assertEqual(token_count_after_login, user_count_after_login)
         self.assertEqual(token.user, user)
 
-    def test_existing_user_login_with_facebook(self):
-        # Given: an user who logged in with facebook in the past
-        email = 'yoonjechoi@gmail.com'
-        user = self.create_user(email=email)
-        before_user_count = MyUser.objects.count()
 
-        # When:
-        response = self.client.post('/auth/facebook',
-                                    {'provider': 'facebook', 'access_token': self.USER_ACCESS_TOKEN})
-
-        # Then:
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        after_user_count = MyUser.objects.count()
-
-        response_data = Munch(response.data)
-
-        user = MyUser.objects.get(email=response_data.user['email'])
-        token = Token.objects.get(key=response_data.token)
-
-        self.assertEqual(before_user_count, after_user_count)
-        self.assertEqual(token.user, user)
+# class FacebookLoginTest(MyUserMixin, APITestCase):
+#
+#     # For the purpose of testing
+#     USER_ACCESS_TOKEN = access_token = 'EAABf7eOV5o4BAIKltVHFeInyFl8vu22lHJAvUT2cKX4BaJIZALfMln15BHI8HDckhoYyOJloEMYkQwlawLJSnCiK5sOF8xUL7pEfsuNJtSgvIRO6pkYYOJOhSgEZC3qGULwDUbtQ6bskamLC7xdeZBt64P7rZAwZD'
+#
+#     def test_first_login_with_facebook(self):
+#         # Given:
+#         before_user_count = MyUser.objects.count()
+#
+#         # When:
+#         response = self.client.post('/auth/facebook',
+#                                     {'provider': 'facebook', 'access_token': self.USER_ACCESS_TOKEN})
+#
+#         # Then:
+#         self.assertEqual(response.status_code, status.HTTP_200_OK)
+#
+#         after_user_count = MyUser.objects.count()
+#         response_data = Munch(response.data)
+#
+#         user = MyUser.objects.get(email=response_data.user['email'])
+#         token = Token.objects.get(key=response_data.token)
+#
+#         self.assertEqual(before_user_count + 1, after_user_count)
+#         self.assertEqual(token.user, user)
+#
+#     def test_existing_user_login_with_facebook(self):
+#         # Given: an user who logged in with facebook in the past
+#         email = 'yoonjechoi@gmail.com'
+#         user = self.create_user(email=email)
+#         before_user_count = MyUser.objects.count()
+#
+#         # When:
+#         response = self.client.post('/auth/facebook',
+#                                     {'provider': 'facebook', 'access_token': self.USER_ACCESS_TOKEN})
+#
+#         # Then:
+#         self.assertEqual(response.status_code, status.HTTP_200_OK)
+#         after_user_count = MyUser.objects.count()
+#
+#         response_data = Munch(response.data)
+#
+#         user = MyUser.objects.get(email=response_data.user['email'])
+#         token = Token.objects.get(key=response_data.token)
+#
+#         self.assertEqual(before_user_count, after_user_count)
+#         self.assertEqual(token.user, user)

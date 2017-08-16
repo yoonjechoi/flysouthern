@@ -3,9 +3,9 @@
 
 from django.conf.urls import url
 
-from .views import LoginView, FacebookLoginView
+from .views import LoginView, LoginWithFacebookTokenView
 
 urlpatterns = [
     url(r'login', LoginView.as_view()),
-    url(r'facebook', FacebookLoginView.as_view()),
+    url(r'facebook', LoginWithFacebookTokenView.as_view()),
 ]

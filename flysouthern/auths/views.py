@@ -1,13 +1,13 @@
 import facebook
+from django.conf import settings
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users import models as users_model
-from .auth_providers import FacebookAuth, InvalidAccessToken
-from .serializers import LoginSerializer, SocialLoginSerializer
+from .auth_providers import InvalidAccessToken
+from .serializers import LoginSerializer, FacebookLoginSerializer
 
 
 class LoginView(APIView):
@@ -40,33 +40,69 @@ class LoginView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class FacebookLoginView(APIView):
-
+class LoginWithFacebookTokenView(APIView):
     def post(self, request):
-        serializer = SocialLoginSerializer(data=request.data)
+        '''
 
-        if serializer.is_valid(raise_exception=True):
-            provider = serializer.validated_data['provider']
-            access_token = serializer.validated_data['access_token']
+        response format
 
-            if provider != 'facebook':
-                raise APIException('invalid provider=[%s]' % provider,
-                                   code=status.HTTP_400_BAD_REQUEST)
+        {
+            'user': {
+                'email': 'fake_user_1@example.com',
+                'name': 'fake-user-1',
+                'access_token': 'it is my facebook test token'
+                },
 
-            # verify token
-            FacebookAuth.verify_token(access_token=access_token)
+            'token': 'd6804f767e869807e994e6b1673447c5ba8d6ece'
+        }
+        '''
 
-            # get email address from facebook
-            try:
-                graph = facebook.GraphAPI(access_token=access_token, version='2.1')
-                me = graph.get_object('me', fields='email,name')
-            except facebook.GraphAPIError as e:
-                raise InvalidAccessToken(e.message)
+        serializer = FacebookLoginSerializer(data=request.data)
 
-            me['access_token'] = access_token
+        serializer.is_valid(raise_exception=True)
 
-            # create a MyUser with email and a Token
-            user, does_user_created = users_model.MyUser.objects.get_or_create(email=me['email'])
-            token, does_token_created = Token.objects.get_or_create(user=user)
+        _ = request.data['provider']
+        access_token = request.data['access_token']
 
-            return Response(data={'token': token.key, 'user': me})
+        try:
+            graph = facebook.GraphAPI(access_token=access_token, version='2.1')
+
+            # verify access_token using facebook token debug api
+            result = graph.debug_access_token(access_token,
+                                              settings.FACEBOOK_APP_ID,
+                                              settings.FACEBOOK_APP_SECRET)
+
+            if 'error' in result:
+                error = result['error']
+                raise InvalidAccessToken(error['message'])
+
+            data = result['data']
+
+            if not data['is_valid']:
+                raise InvalidAccessToken(data['error']['message'])
+
+            if data['application'] != settings.FACEBOOK_APP_NAME:
+                raise InvalidAccessToken('incorrect application. '
+                                         'expect={expect}, actual={actual}'
+                                         .format(expect=settings.FACEBOOK_APP_NAME,
+                                                 actual=data['application']))
+
+            scopes = data['scopes']
+
+            if 'email' not in scopes:
+                raise InvalidAccessToken('email is not permitted from facebook.')
+
+                # get email address from facebook
+
+            me = graph.get_object('me', fields='email,name')
+
+        except facebook.GraphAPIError as e:
+            raise InvalidAccessToken(e.message)
+
+        me['access_token'] = access_token
+
+        # create a MyUser with email and a Token
+        user, does_user_created = users_model.MyUser.objects.get_or_create(email=me['email'])
+        token, does_token_created = Token.objects.get_or_create(user=user)
+
+        return Response(data={'token': token.key, 'user': me})
