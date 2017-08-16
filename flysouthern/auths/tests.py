@@ -27,6 +27,8 @@ class AuthsTest(MyUserMixin, APITestCase):
 
         # Then:
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+        self.assertEqual(response.data['token'], token.key)
 
     def test_authenticated_api(self):
         # Given:
