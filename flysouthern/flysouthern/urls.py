@@ -16,8 +16,14 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 
+apis = [
+
+]
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^test/', include('helloworld.urls')),
-    url(r'^api/', include('auths.urls')),
+    url(r'^auth/', include('auths.urls')),
 ]
+
+
