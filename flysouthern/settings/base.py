@@ -117,9 +117,7 @@ REST_FRAMEWORK = {
 
 AUTH_USER_MODEL = 'users.MyUser'
 
-# FACEBOOK_APP_NAME = os.environ.get('FACEBOOK_APP_NAME', 'Fintorrent')
-# FACEBOOK_APP_TOKEN = os.environ.get('FACEBOOK_APP_TOKEN', '191098944763349|5CC6ZdHrLNkZGJbaoqjCsxNmegM')
-
-FACEBOOK_APP_NAME = os.environ.get('FACEBOOK_APP_NAME', 'Dotsaway')
-FACEBOOK_APP_TOKEN = os.environ.get('FACEBOOK_APP_TOKEN', '105475330139790|SW4WHkE6hwlGO8cZCHHlZLLSv4M')
+FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID', 'flysouthern-app-id')
+FACEBOOK_APP_NAME = os.environ.get('FACEBOOK_APP_NAME', 'flysouthern-app-name')
+FACEBOOK_APP_SECRET = os.environ.get('FACEBOOK_APP_SECRET', 'flysouthern-app-secret')
 

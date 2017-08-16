@@ -9,7 +9,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 
-class SocialLoginSerializer(serializers.Serializer):
+class FacebookLoginSerializer(serializers.Serializer):
     provider = serializers.CharField(max_length=64)
     access_token = serializers.CharField()
     access_token_secret = serializers.CharField(required=False)
